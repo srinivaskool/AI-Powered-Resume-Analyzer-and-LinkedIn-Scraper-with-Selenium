@@ -115,7 +115,8 @@ def job_description_matching(query_with_chunks, job_description):
 
 
 def openai(query):
-    openai_api_key = "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"
+    openai_api_key = st.secrets["open_ai_key"]
+    print(openai_api_key)
     embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
     vectorstores = FAISS.from_texts(query, embedding=embeddings)
 

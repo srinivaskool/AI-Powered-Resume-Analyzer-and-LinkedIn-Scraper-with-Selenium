@@ -1,0 +1,19 @@
+<!-- https://jobs.apple.com/en-in/details/200443543/machine-learning-research-engineer?team=MLAI -->
+
+Description:-
+You’ll be working with a team of computer vision and deep learning researchers and engineers to implement world-class algorithms and experiences that work without constraints of what’s possible. As a Machine Learning Research Engineer on this team, you will work rapidly and multi-functionally to understand and implement state of the art techniques, explore capabilities of future hardware and sensors, translate ideas into interactive experience prototypes to guide decision-making, and drive the incubation of those technologies towards product.
+
+Key Qualifications:-
+Strong Python/C++ skills with ability to rapidly prototype ideas, and refine towards production.
+Background in computer vision and machine learning.
+Be able to adapt existing innovative ML models and train/fine-tune them in novel settings, i.e. with new data domain, or implement on-device.
+Familiarity with 3D graphics, geometry and classical CV concepts a plus.
+Comfort with data manipulation and data pipelining.
+Experience with Swift/Metal/Shaders/CoreML is a plus.
+Excellent communication and collaboration skills in a multi-functional setting.
+
+Description:-
+You’ll be working with a team of computer vision and deep learning researchers and engineers to implement world-class algorithms and experiences that work without constraints of what’s possible. As a Machine Learning Research Engineer on this team, you will work rapidly and multi-functionally to understand and implement state of the art techniques, explore capabilities of future hardware and sensors, translate ideas into interactive experience prototypes to guide decision-making, and drive the incubation of those technologies towards product.
+
+Education & Experience:-
+M.S., or Ph.D., or equivalent industry experience in software engineering, computer vision, machine learning or related fields

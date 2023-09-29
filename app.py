@@ -1,3 +1,4 @@
+import os
 import time
 import numpy as np
 import pandas as pd
@@ -14,13 +15,13 @@ from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 import warnings
-warnings.filterwarnings('ignore')
+
+warnings.filterwarnings("ignore")
 
 
 def streamlit_config():
-
     # page configuration
-    st.set_page_config(page_title='Resume Analyzer AI', layout="wide")
+    st.set_page_config(page_title="Resume Analyzer AI", layout="wide")
 
     # page header transparent color
     page_background_color = """
@@ -36,8 +37,10 @@ def streamlit_config():
     st.markdown(page_background_color, unsafe_allow_html=True)
 
     # title and position
-    st.markdown(f'<h1 style="text-align: center;">Resume Analyzer AI</h1>',
-                unsafe_allow_html=True)
+    st.markdown(
+        f'<h1 style="text-align: center;">Resume Analyzer AI</h1>',
+        unsafe_allow_html=True,
+    )
 
 
 def pdf_to_chunks(pdf):
@@ -51,9 +54,8 @@ def pdf_to_chunks(pdf):
 
     # Split the long text into small chunks.
     text_splitter = RecursiveCharacterTextSplitter(
-        chunk_size=700,
-        chunk_overlap=200,
-        length_function=len)
+        chunk_size=700, chunk_overlap=200, length_function=len
+    )
 
     chunks = text_splitter.split_text(text=text)
     return chunks
@@ -89,7 +91,6 @@ def resume_weakness(query_with_chunks):
 
 
 def job_title_suggestion(query_with_chunks):
-
     query = f''' what are the job roles i apply to likedin based on below?
                   
                   """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
@@ -99,29 +100,41 @@ def job_title_suggestion(query_with_chunks):
     return query
 
 
-def openai(openai_api_key, query):
+def job_description_matching(query_with_chunks, job_description):
+    query = f''' I want you to evaluate the job description and my resume, u can verify the qualifications, technologies or languages required for the role and what i know mentioned in resume. 
+                 First tell me if they are aligning or not.
+                 Give a clear answers if it aligning or not. Then give me suggestions how to improve my resume to match the job description of
+                  """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+                  {job_description}
+                  And my resume is 
+                  """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+                  {query_with_chunks}
+                  """""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+                '''
+    return query
 
+
+def openai(query):
+    openai_api_key = "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"
     embeddings = OpenAIEmbeddings(openai_api_key=openai_api_key)
     vectorstores = FAISS.from_texts(query, embedding=embeddings)
 
     docs = vectorstores.similarity_search(query=query, k=3)
 
-    llm = OpenAI(model_name='gpt-3.5-turbo', openai_api_key=openai_api_key)
-    chain = load_qa_chain(llm=llm, chain_type='stuff')
+    llm = OpenAI(model_name="gpt-3.5-turbo", openai_api_key=openai_api_key)
+    chain = load_qa_chain(llm=llm, chain_type="stuff")
     response = chain.run(input_documents=docs, question=query)
     return response
 
 
 class linkedin_scrap:
-
     def linkedin_open_scrolldown(driver, user_job_title):
-
         b = []
         for i in user_job_title:
             x = i.split()
-            y = '%20'.join(x)
+            y = "%20".join(x)
             b.append(y)
-        job_title = '%2C%20'.join(b)
+        job_title = "%2C%20".join(b)
 
         link = f"https://in.linkedin.com/jobs/search?keywords={job_title}&location=India&locationId=&geoId=102713980&f_TPR=r604800&position=1&pageNum=0"
 
@@ -130,21 +143,20 @@ class linkedin_scrap:
 
         c = 0
         while c < 5:
-            driver.execute_script(
-                "window.scrollTo(0, document.body.scrollHeight);")
+            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
             time.sleep(5)
             c += 1
             try:
                 x = driver.find_element(
-                    by=By.XPATH, value="//button[@aria-label='See more jobs']")
-                driver.execute_script('arguments[0].click();', x)
+                    by=By.XPATH, value="//button[@aria-label='See more jobs']"
+                )
+                driver.execute_script("arguments[0].click();", x)
                 time.sleep(3)
             except:
                 pass
                 time.sleep(4)
 
     def job_title_filter(x, user_job_title):
-
         s = [i.lower() for i in user_job_title]
         suggestion = []
         for i in s:
@@ -159,21 +171,23 @@ class linkedin_scrap:
     def get_description(driver, link):
         driver.get(link)
         driver.find_element(
-            by=By.CLASS_NAME, value='show-more-less-html__button').click()
+            by=By.CLASS_NAME, value="show-more-less-html__button"
+        ).click()
         description = driver.find_elements(
-            by=By.CLASS_NAME, value='show-more-less-html')
+            by=By.CLASS_NAME, value="show-more-less-html"
+        )
         driver.implicitly_wait(4)
 
         for j in description:
-            text = j.text.replace('Show less', '')
+            text = j.text.replace("Show less", "")
             return text.strip()
 
     def data_scrap(driver, user_job_title):
-
         company_name = []
         try:
             company = driver.find_elements(
-                by=By.CLASS_NAME, value='base-search-card__subtitle')
+                by=By.CLASS_NAME, value="base-search-card__subtitle"
+            )
             for i in company:
                 company_name.append(i.text)
         except:
@@ -182,7 +196,8 @@ class linkedin_scrap:
         job_title = []
         try:
             title = driver.find_elements(
-                by=By.CLASS_NAME, value='base-search-card__title')
+                by=By.CLASS_NAME, value="base-search-card__title"
+            )
             for i in title:
                 job_title.append(i.text)
         except:
@@ -191,7 +206,8 @@ class linkedin_scrap:
         company_location = []
         try:
             location = driver.find_elements(
-                by=By.CLASS_NAME, value='job-search-card__location')
+                by=By.CLASS_NAME, value="job-search-card__location"
+            )
             for i in location:
                 company_location.append(i.text)
         except:
@@ -200,28 +216,30 @@ class linkedin_scrap:
         job_url = []
         try:
             url = driver.find_elements(
-                by=By.XPATH, value="//a[contains(@href, '/jobs/')]")
-            url_list = [i.get_attribute('href') for i in url]
+                by=By.XPATH, value="//a[contains(@href, '/jobs/')]"
+            )
+            url_list = [i.get_attribute("href") for i in url]
             for url in url_list:
                 job_url.append(url)
         except:
             pass
 
         # combine the all data to single dataframe
-        df = pd.DataFrame(company_name, columns=['Company Name'])
-        df['Job Title'] = pd.DataFrame(job_title)
-        df['Location'] = pd.DataFrame(company_location)
-        df['Website URL'] = pd.DataFrame(job_url)
+        df = pd.DataFrame(company_name, columns=["Company Name"])
+        df["Job Title"] = pd.DataFrame(job_title)
+        df["Location"] = pd.DataFrame(company_location)
+        df["Website URL"] = pd.DataFrame(job_url)
 
         # job title filter based on chatgpt suggestion
-        df['Job Title'] = df['Job Title'].apply(
-            lambda x: linkedin_scrap.job_title_filter(x, user_job_title))
+        df["Job Title"] = df["Job Title"].apply(
+            lambda x: linkedin_scrap.job_title_filter(x, user_job_title)
+        )
         df = df.dropna()
         df.reset_index(drop=True, inplace=True)
         df = df.iloc[:30, :]
 
         # list of url after filter df
-        website_url = df['Website URL'].tolist()
+        website_url = df["Website URL"].tolist()
 
         # add job description in df
         job_description = []
@@ -232,10 +250,9 @@ class linkedin_scrap:
             if data is not None and len(data.strip()) > 0:
                 job_description.append(data)
             else:
-                job_description.append('Description Not Available')
+                job_description.append("Description Not Available")
 
-        df['Job Description'] = pd.DataFrame(
-            job_description, columns=['Description'])
+        df["Job Description"] = pd.DataFrame(job_description, columns=["Description"])
         df = df.dropna()
         df.reset_index(drop=True, inplace=True)
         return df
@@ -254,165 +271,160 @@ class linkedin_scrap:
 
 
 streamlit_config()
-st.write('')
+st.write("")
 
 
 # sidebar
 with st.sidebar:
-
     add_vertical_space(3)
 
-    option = option_menu(menu_title='', options=['Summary', 'Strength', 'Weakness', 'Suggestion', 'Linkedin Jobs', 'Exit'],
-                         icons=['house-fill', 'database-fill', 'pass-fill', 'list-ul', 'linkedin', 'sign-turn-right-fill'])
+    option = option_menu(
+        menu_title="",
+        options=[
+            "Summary",
+            "Strength",
+            "Weakness",
+            "Suggestion",
+            "Match with Job Description",
+            "Relevant Linkedin Jobs",
+            "Exit",
+        ],
+        icons=[
+            "house-fill",
+            "database-fill",
+            "pass-fill",
+            "list-ul",
+            "database-fill",
+            "linkedin",
+            "sign-turn-right-fill",
+        ],
+    )
 
 
-if option == 'Summary':
-
+if option == "Summary":
     # file upload
-    pdf = st.file_uploader(label='', type='pdf')
-    openai_api_key = st.text_input(label='OpenAI API Key', type='password')
+    pdf = st.file_uploader(label="", type="pdf")
 
     try:
-        if pdf is not None and openai_api_key is not None:
+        if pdf is not None:
             pdf_chunks = pdf_to_chunks(pdf)
 
             summary = resume_summary(query_with_chunks=pdf_chunks)
-            result_summary = openai(openai_api_key=openai_api_key, query=summary)
+            result_summary = openai(query=summary)
 
-            st.subheader('Summary:')
+            st.subheader("Summary:")
             st.write(result_summary)
 
     except:
         col1, col2 = st.columns(2)
         with col1:
-            st.warning('OpenAI API Key is Invalid')
+            st.warning("OpenAI API Key is Invalid")
 
 
-elif option == 'Strength':
-
+elif option == "Strength":
     # file upload
-    pdf = st.file_uploader(label='', type='pdf')
-    openai_api_key = st.text_input(label='OpenAI API Key', type='password')
+    pdf = st.file_uploader(label="", type="pdf")
 
     try:
-        if pdf is not None and openai_api_key is not None:
-
+        if pdf is not None:
             pdf_chunks = pdf_to_chunks(pdf)
 
             # Resume summary
             summary = resume_summary(query_with_chunks=pdf_chunks)
-            result_summary = openai(openai_api_key=openai_api_key, query=summary)
+            result_summary = openai(query=summary)
 
             strength = resume_strength(query_with_chunks=result_summary)
-            result_strength = openai(openai_api_key=openai_api_key, query=strength)
+            result_strength = openai(query=strength)
 
-            st.subheader('Strength:')
+            st.subheader("Strength:")
             st.write(result_strength)
 
     except:
         col1, col2 = st.columns(2)
         with col1:
-            st.warning('OpenAI API Key is Invalid')
+            st.warning("OpenAI API Key is Invalid")
 
 
-elif option == 'Weakness':
-
+elif option == "Weakness":
     # file upload
-    pdf = st.file_uploader(label='', type='pdf')
-    openai_api_key = st.text_input(label='OpenAI API Key', type='password')
+    pdf = st.file_uploader(label="", type="pdf")
 
     try:
-        if pdf is not None and openai_api_key is not None:
-
+        if pdf is not None:
             pdf_chunks = pdf_to_chunks(pdf)
 
             # Resume summary
             summary = resume_summary(query_with_chunks=pdf_chunks)
-            result_summary = openai(openai_api_key=openai_api_key, query=summary)
+            result_summary = openai(query=summary)
 
             weakness = resume_weakness(query_with_chunks=result_summary)
-            result_weakness = openai(openai_api_key=openai_api_key, query=weakness)
+            result_weakness = openai(query=weakness)
 
-            st.subheader('Weakness:')
+            st.subheader("Weakness:")
             st.write(result_weakness)
 
     except:
         col1, col2 = st.columns(2)
         with col1:
-            st.warning('OpenAI API Key is Invalid')
+            st.warning("OpenAI API Key is Invalid")
 
 
-elif option == 'Suggestion':
-
+elif option == "Suggestion":
     # file upload
-    pdf = st.file_uploader(label='', type='pdf')
-    openai_api_key = st.text_input(label='OpenAI API Key', type='password')
+    pdf = st.file_uploader(label="", type="pdf")
 
     try:
-        if pdf is not None and openai_api_key is not None:
+        if pdf is not None:
             pdf_chunks = pdf_to_chunks(pdf)
 
             # Resume summary
             summary = resume_summary(query_with_chunks=pdf_chunks)
-            result_summary = openai(openai_api_key=openai_api_key, query=summary)
+            result_summary = openai(query=summary)
 
             job_suggestion = job_title_suggestion(query_with_chunks=result_summary)
-            result_suggestion = openai(openai_api_key=openai_api_key, query=job_suggestion)
+            result_suggestion = openai(query=job_suggestion)
 
-            st.subheader('Suggestion: ')
+            st.subheader("Suggestion: ")
             st.write(result_suggestion)
 
     except:
         col1, col2 = st.columns(2)
         with col1:
-            st.warning('OpenAI API Key is Invalid')
+            st.warning("OpenAI API Key is Invalid")
 
+elif option == "Match with Job Description":
+    pdf = st.file_uploader(label="", type="pdf")
 
-elif option == 'Linkedin Jobs':
+    job_description = st.text_area(label="Enter job description", height=250)
 
     try:
-        st.info("Please ensure that 'chromedriver.exe' is installed and actively running on your system.\
-                 If not, you can watch the project demo video for guidance: [AI-Powered Resume Analyzer and\
-                 LinkedIn Scraper with Selenium - Project Demo Video](https://youtu.be/wFouWeK7NPg)")
-        
-        # get user input of job title
-        user_input_job_title = st.text_input(label='Enter Job Titles (with comma separated):')
-        submit = st.button('Submit')
+        if pdf is not None and job_description is not "":
+            pdf_chunks = pdf_to_chunks(pdf)
 
-        if submit and len(user_input_job_title) > 0:
+            # Resume summary
+            summary = resume_summary(query_with_chunks=pdf_chunks)
+            result_summary = openai(query=summary)
 
-            user_job_title = user_input_job_title.split(',')
+            job_matching = job_description_matching(
+                query_with_chunks=result_summary, job_description=job_description
+            )
+            result_matching = openai(query=job_matching)
 
-            df = linkedin_scrap.main(user_job_title)
-
-            l = len(df['Company Name'])
-            for i in range(0, l):
-                st.write(f"Company Name : {df.iloc[i,0]}")
-                st.write(f"Job Title    : {df.iloc[i,1]}")
-                st.write(f"Location     : {df.iloc[i,2]}")
-                st.write(f"Website URL  : {df.iloc[i,3]}")
-                with st.expander(label='Job Desription'):
-                    st.write(df.iloc[i, 4])
-                st.write('')
-                st.write('')
-
-        elif submit and len(user_input_job_title) == 0:
-            col1, col2 = st.columns(2)
-            with col1:
-                st.info('Please Enter the Job Titles')
+            st.subheader("Matching : ")
+            st.write(result_matching)
 
     except:
-        st.write('')
-        st.info("This feature is currently not working in the deployed Streamlit application due to a 'selenium.common.exceptions.WebDriverException' error.")
-        st.write('')
-
-        st.write(
-            "Please use the local Streamlit application for a smooth experience: [http://localhost:8501](http://localhost:8501)")
+        st.warning("Some error occurred")
 
 
-elif option == 'Exit':
+elif option == "Relevant Linkedin Jobs":
+    try:
+        st.write("This feature is coming soon...")
 
+    except:
+        st.write("")
+
+elif option == "Exit":
     add_vertical_space(3)
-    st.success('Thank you for your time. Exiting the application')
+    st.success("Thank you for your time. Exiting the application")
     st.balloons()
-
